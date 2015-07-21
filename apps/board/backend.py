@@ -20,7 +20,8 @@ def _get_post_list(request, item_per_page=15):
         board_querystring = 'board='+str(board.id)
     post_count = 0
     if board_filter:
-        board_post_notice = BoardPost.objects.filter(is_notice=True, board=board_filter).order_by('-id')
+        board_post_notice = BoardPost.objects.filter(
+            is_notice=True, board=board_filter).order_by('-id')
         board_post = BoardPost.objects.filter(board=board_filter).order_by('-id')
         post_count = board.post_count
     else:
@@ -56,10 +57,12 @@ def _get_post_list(request, item_per_page=15):
         post['created_time'] = board_post.board_content.created_time
         post['post_id'] = board_post.id
         post['vote'] = board_post.board_content.get_vote()
+        post['comment_count'] = board_post.comment_count
         if adult_filter == 'true' and board_post.board_content.is_adult:
             post['title'] = 'filtered'
         if BoardPostIs_read.objects.filter(board_post=board_post,
-                               userprofile=request.user.userprofile).exists():
+                                           userprofile=request.user.userprofile
+                                           ).exists():
             post['is_read'] = ' '
         else:
             post['is_read'] = 'N'
@@ -79,10 +82,12 @@ def _get_post_list(request, item_per_page=15):
         post['created_time'] = board_post.board_content.created_time
         post['post_id'] = board_post.id
         post['vote'] = board_post.board_content.get_vote()
+        post['comment_count'] = board_post.comment_count
         if adult_filter == 'true' and board_post.board_content.is_adult:
             post['title'] = 'filtered'
         if BoardPostIs_read.objects.filter(board_post=board_post,
-                               userprofile=request.user.userprofile).exists():
+                                           userprofile=request.user.userprofile
+                                           ).exists():
             post['is_read'] = ' '
         else:
             post['is_read'] = 'N'
@@ -164,7 +169,7 @@ def _get_content(request, post_id):
         return ({}, [])
     try:
         board_post_is_read = BoardPostIs_read.objects.get(board_post=board_post,
-                                          userprofile = request.user.userprofile)
+                                          userprofile=request.user.userprofile)
     except ObjectDoesNotExist:
         board_post_is_read = BoardPostIs_read()
         board_post_is_read.board_post = board_post
@@ -201,7 +206,10 @@ def _get_post(request, board_post, type):
         post['title'] = board_post.title
         post['board'] = board_post.board.name
         post['board_id'] = board_post.board.id
-        post['category'] = board_post.board_category.name
+        try:
+            post['category'] = board_post.board_category.name
+        except:
+            post['category'] = ''
     else:
         return post
     userprofile = board_post.author
@@ -270,9 +278,12 @@ def _write_post(request, is_post_or_comment, check=0, modify=False):
             board_post = BoardPost()
         try:
             board_post.board = Board.objects.get(id=board)
-            board_post.board_category = BoardCategory.objects.get(name=category, board=board_post.board)
         except ObjectDoesNotExist:
             return
+        try:
+            board_post.board_category = BoardCategory.objects.get(name=category, board=board_post.board)
+        except ObjectDoesNotExist:
+            pass
         board_content.save()
         board_post.board_content = board_content
         board_post.is_notice = bool(is_notice)
@@ -300,10 +311,14 @@ def _write_post(request, is_post_or_comment, check=0, modify=False):
         else:
             board_comment = BoardComment()
             try:
+                
                 if is_post_or_comment == 'Comment':
                     board_comment.board_post = BoardPost.objects.get(id=board_post_id)
                 else:
                     board_comment.original_comment = BoardComment.objects.get(id=board_post_id)
+                board_comment.board_post.comment_count += 1
+                print board_comment.board_post.comment_count
+                board_comment.board_post.save()
             except ObjectDoesNotExist:
                 return
         board_comment.author = user_profile
