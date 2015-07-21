@@ -244,3 +244,50 @@ def _write_post(request, is_post_or_comment, check=0):
         return board_comment.board_post.id
     else:
         return
+
+def _get_vote(request):
+    message = ""
+    id = request.Get.get('id')
+    vote_kind = request.Get.get('vote')
+    board_content = BoardContent.objects.filter(id=id)
+    if vote_kind == 'up':
+        vote_value = True
+    elif vote_kind == 'down':
+        vote_value = False
+    
+    else:
+        message = "fail"
+        result = {}
+        result ['message'] = message 
+        result ['vote'] = board_content.get_vote()
+        return result
+    
+    if board_content:
+        board_content = board_content[0]
+        board_content_vote = BoardContentVote.objects.filter(
+                board_content = board_content,
+                userprofile = request.user.userprofile)
+        if board_content_vote:
+            vote = board_content_vote[0]
+            if vote.is_up == vote_value : 
+                vote.delete()
+                mesage = "success " + vote_kind + " cancle"
+            else:
+                vote.is_up = vote_value
+                vote.save()
+                message="succes " + vote_kind
+        else:
+            vote = BoardContentVote()
+            vote.is_up = vote_value
+            vote.userprofile = request.user.userprofile
+            vote.board_content = board_content
+            vote.save()
+    else:
+        message = "fail"
+    result = {}
+    result ['message'] = message 
+    result ['vote'] = boatd_content.get_vote()
+    return result
+
+
+

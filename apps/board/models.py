@@ -63,6 +63,8 @@ class BoardContentVote(models.Model):
     userprofile = models.ForeignKey('session.UserProfile',
                                     related_name="board_content_vote")
     is_up = models.BooleanField(null=False)
+    is_adult = models.BooleanField(null=False)
+    is_political = models.BooleanField(null=False)
 
 
 class BoardContentVoteAdult(models.Model):
