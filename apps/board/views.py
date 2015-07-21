@@ -6,7 +6,7 @@ from apps.board.models import *
 from apps.board.backend import _get_post_list, _get_board_list
 from apps.board.backend import _get_querystring, _get_content
 from apps.board.backend import _write_post, _get_current_board
-from apps.board.backend import _delete_post
+from apps.board.backend import _delete_post, _get_vote
 from django.utils import timezone
 import json
 
@@ -136,59 +136,69 @@ def post_list(request):
 
 @login_required(login_url='/session/login')
 def vote(request):
-    result = _get_vote(request)
-    return HttpResponse(json.dumps(result), content_type="application/json")
-
-
-@login_required(login_url='/session/login')
-def vote_adult(request):
     message = ""
-    id = request.GET.get('id')
-    _BoardContent = BoardContent.objects.filter(id=id)
-    if _BoardContent:
-        _BoardContent = _BoardContent[0]
-        _BoardContentVoteAdult = BoardContentVoteAdult.objects.filter(
-            board_content=_BoardContent,
-            userprofile=request.user.userprofile)
-        if _BoardContentVoteAdult:
-            message = "already voted_adult"
-        else:
-            vote = BoardContentVoteAdult()
-            vote.userprofile = request.user.userprofile
-            vote.board_content = _BoardContent
-            vote.save()
-            message = "success"
+    content_id = request.GET.get('content_id')
+    vote_kind=request.GET.get('kind')
+    board_content = BoardContent.objects.filter(id=content_id)
+    if vote_kind == 'up':
+        vote_value = True
+    elif vote_kind == 'down':
+        vote_value = False 
+    elif (vote_kind == 'adult') or (vote_kind == 'political') :
+        message = ""
     else:
-        message = "content not exist"
-    result = {}
-    result['message'] = message
-    return HttpResponse(json.dumps(result), content_type="application/json")
-
-
-@login_required(login_url='/session/login')
-def vote_political(request):
-    message = ""
-    id = request.GET.get('id')
-    _BoardContent = BoardContent.objects.filter(id=id)
-    if _BoardContent:
-        _BoardContent = _BoardContent[0]
-        _BoardContentVotePolitical = BoardContentVotePolitical.objects.filter(
-            board_content=_BoardContent,
-            userprofile=request.user.userprofile)
-        if _BoardContentVotePolitical:
-            message = "already voted_political"
+        message = "fail"
+        result = {}
+        result ['message'] = message 
+        result ['vote'] = board_content.get_vote()
+        return result
+    
+    if board_content:
+        board_content = board_content[0]
+        #make a board_content_vote for vote_kind
+        if (vote_kind == 'up') or (vote_kind == 'down'):
+            board_content_vote = BoardContentVote.objects.filter(
+                    board_content = board_content,
+                    userprofile = request.user.userprofile)
+        elif vote_kind == 'political':
+            board_content_vote = BoardContentVotePolitical.objects.filter(
+                    board_content = board_content,
+                    userprofile = request.user.userprofile)
+        elif vote_kind == 'adult':
+            board_content_vote = BoardContentVoteAdult.objects.filter(
+                    board_content = board_content,
+                    userprofile = request.user.userprofile)        
+        if board_content_vote:
+            if (vote_kind == 'up') or (vote_kind == 'down'):
+                vote = board_content_vote[0]
+                if vote.is_up == vote_value : 
+                    vote.delete()
+                    message = vote_kind + " cancled"
+                else:
+                    vote.is_up = vote_value
+                    vote.save()
+                    message="succes " + vote_kind
+            else:
+                vote = board_content_vote[0]
+                message = "Already voted " + vote_kind 
         else:
-            vote = BoardContentVotePolitical()
+            if (vote_kind == 'up') or (vote_kind == 'down'):
+                vote = BoardContentVote()
+                vote.is_up = vote_value
+            elif vote_kind == 'political':
+                vote = BoardContentVotePolitical()
+            elif vote_kind == 'adult':
+                vote = BoardContentVoteAdult()
             vote.userprofile = request.user.userprofile
-            vote.board_content = _BoardContent
+            vote.board_content = board_content
             vote.save()
-            message = "success"
+            message = "sucess " + vote_kind
     else:
-        message = "content not exist"
+        message = "fail"
     result = {}
-    result['message'] = message
+    result ['message'] = message 
+    result ['vote'] = board_content.get_vote()
     return HttpResponse(json.dumps(result), content_type="application/json")
-
 
 @login_required(login_url='/session/login')
 def delete(request):

@@ -331,8 +331,11 @@ def _write_post(request, is_post_or_comment, check=0, modify=False):
 
 def _get_vote(request):
     message = ""
+    print("flage")
     id = request.Get.get('id')
+    print(id)
     vote_kind = request.Get.get('vote')
+    print(vote_kind)
     board_content = BoardContent.objects.filter(id=id)
     if vote_kind == 'up':
         vote_value = True
