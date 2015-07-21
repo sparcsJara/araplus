@@ -1,15 +1,16 @@
 
-{% extends "base.html" %}
+{% extends "board/board_list.html" %}
 {% block js %}
 <script>
     $(document).ready(function(){
         $(".comment").click(function(){
-            var cid=$(this).attr("id").slice(3);
+            var board_comment_id=$(this).attr("id").slice(3);
 	   
-            var content = $("#comment"+cid).text();
-            var mod_comment = "<form action='./comment_mod/' method='POST'>"+
+            var content = $("#comment"+board_comment_id).text();
+            var mod_comment = "<form action='./comment_mod/{{querystring}}' method='POST'>"+
                 "{% csrf_token %}"+
-                "<input type='hidden' name='cid' value=" + cid + ">"+ 
+                "<input type='hidden' name='board_comment_id' value=" + board_comment_id + ">"+ 
+                "<input type='hidden' name='board_post_id' value={{post.id}}>"+
                 "<div class='form-group'>"+
                     "<textarea class='form-control' rows='2' name='content'>"+
                         content+
@@ -18,7 +19,23 @@
                                 "<button type='submit' class='btn btn-info col-md-1 col-md-offset-11'>"+
                                     "완료"+
                                     "</button></div></div></form>"
-            $(mod_comment).replaceAll("#comment_content"+cid);
+            $(mod_comment).replaceAll("#comment_content"+board_comment_id);
+        });
+        $(".re_comment").click(function(){
+            var board_comment_id=$(this).attr("id").slice(11);
+            var write_comment = "<form action='./re_comment/{{querystring}}' method='POST'>"+
+                "{%csrf_token%}"+
+                "<input type='hidden' name='board_comment_id' value="+board_comment_id+">"+
+                "<div class='form-group'>"+
+                "    <label>Anonymous</label>"+
+                "    <input type='checkbox' name='anonymous'>"+
+                "</div>"+
+                "<div class='form-group'>"+
+                "    <textarea class='form-control' rows='3' name='content'></textarea>"+
+                "</div>"+
+                "<button type='submit' class='btn btn-normal col-md-1 col-md-offset-11'>Submit</button>"+
+                "</form>";
+            $("#re_comment_write"+board_comment_id).html(write_comment);
         });
 		$(".vote").click(function() {
 			var vote_uid;
@@ -160,7 +177,7 @@
     });
 </script>
 {% endblock %}
-{% block content %}
+{% block board_read %}
 <div class="container">
     <div class="col-md-12">
         <div class="panel panel-success">
@@ -210,7 +227,11 @@
             </div>
         </div>
         {% for comment in comment_list %}
+        {% if comment.best_comment %}
+        <div class="panel panel-danger">
+        {% else %}
         <div class="panel panel-success">
+        {% endif %}
             <div class="panel-heading">
                 <div>
                     <span> {{ comment.username }}</span>
@@ -221,11 +242,11 @@
                 </div>
             </div>
             <div class="panel-body">
-                <div id="comment_content{{ comment.comment_id }}">
-                    <div id="comment{{comment.comment_id}}">{{ comment.content|safe }}</div>
+                <div id="comment_content{{ comment.id }}">
+                    <div id="comment{{comment.id}}">{{ comment.content|safe }}</div>
                     <div class="col-md-12">
 						<div class="row">
-						    <div class="col-md-7"></div>
+						    <div class="col-md-6"></div>
                             {% if not comment.deleted %}
                             <div class="dropdown col-md-1">
                                 <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
@@ -241,8 +262,56 @@
                             <button class="btn btn-success col-md-1 vote up" id="up_{{comment.content_id}}">Up</button>
                             <button class="btn btn-danger col-md-1 vote down" id="down_{{comment.content_id}}">Down</button>
                             {% if comment.return %}			
-							<button type="submit" class="btn btn-info col-md-1 comment" id="btn{{comment.comment_id}}">Modify</button>
+							<button type="submit" class="btn btn-info col-md-1 comment" id="btn{{comment.id}}">Modify</button>
                             <button class="btn btn-normal col-md-1 delete" id="delete_{{comment.content_id}}">Delete</button>
+                            {% else %}
+                            <div class="col-md-2"></div>
+                            {% endif %}
+                            <button class="btn btn-info col-md-1 re_comment" id="re_comment_{{comment.id}}">Re-comment</button>
+                            {% endif %}		
+						</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="re_comment_write{{comment.id}}">
+        </div>
+        {% for re_comment in comment.re_comment_list %}
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <div>
+                    <span> {{ re_comment.username }}</span>
+                </div>
+                <div> 
+                    <span class="col-md-10">{{re_comment.created_time}}</span>
+                    <span id="vote_{{re_comment.content_id}}">추천 +{{re_comment.vote.up}}/-{{re_comment.vote.down}}</span>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div id="comment_content{{ re_comment.id }}">
+                    <div id="comment{{re_comment.id}}">{{ re_comment.content|safe }}</div>
+                    <div class="col-md-12">
+						<div class="row">
+						    <div class="col-md-6"></div>
+                            {% if not re_comment.deleted %}
+                            <div class="dropdown col-md-1">
+                                <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                                    Report
+                                    <span class="caret"></span>
+                                    </button>
+                                    <ul class="dropdown-menu" aria-labelledby="dropdownMenu2">
+                                        <li><a href="#" class="report" id="report_{{re_comment.content_id}}">신고</a></li>
+                                        <li><a href="#" class="adult" id="adult_{{re_comment.content_id}}">가버렷</a></li>
+                                        <li><a href="#" class="political" id="political_{{re_comment.content_id}}">보내야한다</a></li>
+                                </ul>
+                            </div>
+                            <button class="btn btn-success col-md-1 vote up" id="up_{{re_comment.content_id}}">Up</button>
+                            <button class="btn btn-danger col-md-1 vote down" id="down_{{re_comment.content_id}}">Down</button>
+                            {% if re_comment.return %}			
+							<button type="submit" class="btn btn-info col-md-1 comment" id="btn{{re_comment.id}}">Modify</button>
+                            <button class="btn btn-normal col-md-1 delete" id="delete_{{re_comment.content_id}}">Delete</button>
+                            {% else %}
+                            <div class="col-md-2"></div>
                             {% endif %}
                             {% endif %}		
 						</div>
@@ -251,9 +320,11 @@
             </div>
         </div>
         {% endfor %}
+
+        {% endfor %}
         {% if not post.deleted %}
         <div>
-            <form action="./comment/" method="POST">
+            <form action="./comment/{{querystring}}" method="POST">
                 {%csrf_token%}
                 <input type="hidden" name="board_post_id" value="{{ post.id }}">
                 <div class="form-group">
@@ -268,58 +339,7 @@
         </div>
         {% endif %}
 
-	<table style="width:100%">
-		<thead>
-			<tr>
-				<th width="150">user</th>
-                <th width="150">
-                    <div class="dropdown">                  
-                        <button class="btn btn-info dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">{{current_board.board_name|default:"All"}}
-                          <span class="caret"></span>
-                        </button>
-                        <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-                            <li><a href="?">All</a></li>
-                            {% for bd in board_list %}
-                            <li><a href="?board={{bd.board_id}}">{{ bd.board_name }}</a></li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-				</th>
-				<th width="350">title</th>
-				<th width="100">+/-</th>
-				<th width="150">date</th>
-			</tr>
-		</thead>
-		<tbody>
-			{% for pst in post_list %}
-				<tr>
-					<td width="150">{{pst.username}}</td>
-                    <td width="150"><a href="{{pst.board.querystring}}">{{pst.board.board_name}}</a></td>
-					{%if pst.is_notice%}
-					<td width="350"><a href="/board/{{pst.post_id}}/{{querystring}}"><label style="color :black">Notice:{{pst.title}}</label></a></td>
-					{%else%}
-					<td width="350"><a href="/board/{{pst.post_id}}/{{querystring}}">{{pst.title}}</a></td>
-					{%endif%}
-					<td width="100">+{{pst.vote.up}}/-{{pst.vote.down}}</td>
-					<td width="150">{{pst.created_time}}</td>
-				</tr>
-			{% endfor %}
-		</tbody>
-    </table>
-    <button class="btn btn-warn">
-        {% if is_adult %}
-		<a href="/board/?{{querystring}}&adult_filter=false" id='2'>See Adult</a>
-        {% else %}
-		<a href="/board/?{{querystring}}&adult_filter=true" id='1'>Filter Adult Post</a>
-        {% endif %}
-    </button>
-	<button class="btn btn-normal"><a href="/board/post/{{querystring}}">Write</a></button>
-		<div class="paginator">
-			{%for page in paginator%}
-			<a href="/board/{{page.querystring}}">{{page.page}}</a>
-			{%endfor%}
-		</div>
-</div>   
+    </div>   
 </div>
 
 </div>
@@ -356,7 +376,6 @@
           
     </div>
 </div>
-
 {% endblock %}
 
 
