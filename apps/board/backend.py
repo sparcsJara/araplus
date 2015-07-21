@@ -329,53 +329,6 @@ def _write_post(request, is_post_or_comment, check=0, modify=False):
     else:
         return
 
-def _get_vote(request):
-    message = ""
-    print("flage")
-    id = request.Get.get('id')
-    print(id)
-    vote_kind = request.Get.get('vote')
-    print(vote_kind)
-    board_content = BoardContent.objects.filter(id=id)
-    if vote_kind == 'up':
-        vote_value = True
-    elif vote_kind == 'down':
-        vote_value = False
-    
-    else:
-        message = "fail"
-        result = {}
-        result ['message'] = message 
-        result ['vote'] = board_content.get_vote()
-        return result
-    
-    if board_content:
-        board_content = board_content[0]
-        board_content_vote = BoardContentVote.objects.filter(
-                board_content = board_content,
-                userprofile = request.user.userprofile)
-        if board_content_vote:
-            vote = board_content_vote[0]
-            if vote.is_up == vote_value : 
-                vote.delete()
-                mesage = "success " + vote_kind + " cancle"
-            else:
-                vote.is_up = vote_value
-                vote.save()
-                message="succes " + vote_kind
-        else:
-            vote = BoardContentVote()
-            vote.is_up = vote_value
-            vote.userprofile = request.user.userprofile
-            vote.board_content = board_content
-            vote.save()
-    else:
-        message = "fail"
-    result = {}
-    result ['message'] = message 
-    result ['vote'] = boatd_content.get_vote()
-    return result
-
 
 
 
@@ -397,5 +350,25 @@ def _delete_post(request):
         return 'not allowed'
     board_content.is_deleted = True
     board_content.save()
+    return 'success'
+
+
+def _report(request):
+    content_id = request.POST.get('id', 0)
+    report_reason = request.POST.get('report_reason', '')
+    report_content = request.POST.get('report_content', '')
+    if report_reason == '' or report_reason == '0':
+        return 'no reason'
+    try:
+        board_content = BoardContent.objects.get(id=content_id)
+    except ObjectDoesNotExist:
+        return 'no content'
+    board_report = BoardReport()
+    board_report.reason = report_reason
+    board_report.content = report_content
+    board_report.board_content = board_content
+    board_report.created_time = timezone.now()
+    board_report.userprofile = request.user.userprofile
+    board_report.save()
     return 'success'
 

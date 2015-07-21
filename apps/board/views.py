@@ -6,7 +6,7 @@ from apps.board.models import *
 from apps.board.backend import _get_post_list, _get_board_list
 from apps.board.backend import _get_querystring, _get_content
 from apps.board.backend import _write_post, _get_current_board
-from apps.board.backend import _delete_post, _get_vote
+from apps.board.backend import _delete_post, _report
 from django.utils import timezone
 import json
 
@@ -208,7 +208,9 @@ def delete(request):
 
 @login_required(login_url='/session/login')
 def report(request):
+    message = ''
     if request.method == 'POST':
+<<<<<<< HEAD
         cid = request.POST.get('id', '')
         reason = request.POST.get('report_reason', '')
         content = request.POST.get('report_content', '')
@@ -231,3 +233,7 @@ def report(request):
         return HttpResponse(message)
 
 
+=======
+        message = _report(request)
+    return HttpResponse(message)
+>>>>>>> f3a0ec8cd7776076d804d52577ff23f86f3a0d34
