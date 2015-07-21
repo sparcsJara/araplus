@@ -210,7 +210,6 @@ def delete(request):
 def report(request):
     message = ''
     if request.method == 'POST':
-<<<<<<< HEAD
         cid = request.POST.get('id', '')
         reason = request.POST.get('report_reason', '')
         content = request.POST.get('report_content', '')
@@ -231,9 +230,5 @@ def report(request):
             else:
                 message = 'no content'
         return HttpResponse(message)
-
-
-=======
-        message = _report(request)
+    message = _report(request)
     return HttpResponse(message)
->>>>>>> f3a0ec8cd7776076d804d52577ff23f86f3a0d34
