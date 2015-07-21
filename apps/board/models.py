@@ -126,7 +126,7 @@ class BoardPost(models.Model):
     board_category = models.ForeignKey('BoardCategory',
                                        related_name='board_post',
                                        null=True,
-                                       blank-True)
+                                       blank=True)
     comment_count = models.IntegerField(default=0)
 
     def __str__(self):
