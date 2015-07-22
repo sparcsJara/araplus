@@ -19,20 +19,21 @@
             $(mod_comment).replaceAll("#comment_content"+cid);
         });
 		$(".vote").click(function() {
-			var vote_uid;
-			var vote_url;
-			var vote_id = $(this).attr("id").split('_'); 
-			var vote_kind = vote_id[0];
-			vote_uid = vote_id[1];
-			vote_url = '/board/vote/'
+			var vote_id =  $(this).attr("id").split('_'); 
+            var vote_url = '/board/' + vote_id[0] + '/' + vote_id[1];
+            var vote
 			$.ajax(
 				{
 				url : vote_url,
-				data : { content_id : vote_uid, kind : vote_kind },
 				dataType : 'json',
-				success : function(data){
-					$("#vote_"+vote_uid).html("추천 +"+data.vote.up+"/-"+data.vote.down);
-					alert(data.message);
+                success : function(data){
+                    if(data.response == 'success'){
+                        $("#vote_"+vote_id[1]).html("추천 +"+data.vote.up+"/-"+data.vote.down);
+                        alert(data.message);
+                    }
+                    else{
+                        alert('Failed');
+                    }
 				}
 			});
 		});	

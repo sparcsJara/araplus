@@ -67,8 +67,6 @@ class BoardContentVote(models.Model):
     userprofile = models.ForeignKey('session.UserProfile',
                                     related_name="board_content_vote")
     is_up = models.BooleanField(null=False)
-    is_adult = models.BooleanField(null=False,default=False)
-    is_political = models.BooleanField(null=False,default=False)
 
 
 class BoardContentVoteAdult(models.Model):
@@ -131,7 +129,7 @@ class BoardPost(models.Model):
                                        blank=True)
     comment_count = models.IntegerField(default=0)
 
-    def __str__(self):
+    def __unicode__(self):
         title = self.title
         created_time = self.board_content.created_time
         author = self.author.user

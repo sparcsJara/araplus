@@ -22,7 +22,8 @@ urlpatterns = [
     url(r'^([1-9][0-9]*)/modify/$', 'apps.board.views.post_modify'),
     url(r'^([1-9][0-9]*)/comment/$', 'apps.board.views.comment_write'),
     url(r'^([1-9][0-9]*)/comment_mod/$', 'apps.board.views.comment_modify'),
-    url(r'^[1-9][0-9]*/re_comment/$', 'apps.board.views.re_comment_write'),    
+    url(r'^[1-9][0-9]*/re_comment/$', 'apps.board.views.re_comment_write'),
     url(r'^delete/$','apps.board.views.delete'),
-    url(r'^vote/$', 'apps.board.views.vote'),
+    url(r'^([a-z]*)/([1-9][0-9]*)/$', 'apps.board.views.content_vote'),
+    url(r'^report/$', 'apps.board.views.report'),
 ]
