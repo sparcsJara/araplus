@@ -177,7 +177,14 @@
                     }
                 }
             });
-        });
+		});
+		$(".contnet").click(function(){
+			var content_id = $(this).attr("id").split('_');
+			var butoon = $("#comment_"+content_id[1]);
+			var text = $("#comment_"+content_id[1]).html()
+			var content = "<div id='comment"+"{{comment.id}}'>"+text+"</div>";
+			$(content).replaceAll(button);
+		});
     });
 </script>
 {% endblock %}
@@ -272,8 +279,14 @@
             </div>
             <div class="panel-body">
                 <div id="comment_content{{ comment.id }}">
-                    <div id="comment{{comment.id}}">{{ comment.content | safe }}</div>
-                    <div class="col-md-12">
+					<div id="comment{{comment.id}}">
+						{% if comment.is_political %}
+						<a onclick-"this.nextSibling.stylde.display=(this.nextSibling.style.display=='none')?'block':'none';" href="javascript:void(0)">이건 정치글입니다.</a><div style="display:none"><div id="comment{{domment.id}}">{{ comment.content | force_escape | linebreaksbr }}</div></div>
+						{% else %}
+						<div id="comment{{domment.id}}">{{ comment.content | force_excape | linebreaksbr}} </div>
+						{% endif %}
+					
+					<div class="col-md-12">
 						<div class="row">
 						    <div class="col-md-7"></div>
                             {% if not comment.deleted %}
