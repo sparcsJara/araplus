@@ -46,6 +46,20 @@ class BoardContent(models.Model):
         vote['down'] = down
         return vote
 
+    def go_adult(self):
+        adult = 0 
+        adult = len(self.board_content_vote_adult.all())
+        if adult > 0 :
+            return True
+        return False
+    
+    def go_political(self):
+        political = 0
+        political = len(self.board_content_vote_political.all())
+        if political > 0 :
+            return True
+        return False
+
     def replace_content_tags(self):
         result = cgi.escape(self.content)
         result = result.replace("\n", "<br />")
