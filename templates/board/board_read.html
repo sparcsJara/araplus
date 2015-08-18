@@ -15,11 +15,13 @@
         <!-- 선택한 게시물 style 변경 -->
         selected_post = location.href.split('/')[5];
         $("#post-row-"+selected_post).addClass('selected');
-        <!-- --------------------- -->
+		<!-- --------------------- -->
+		//for modifying comment
         $(".comment").click(function(){
-            var board_comment_id=$(this).attr("id").slice(3);
-            var content = $("#comment"+board_comment_id).html().replace(/<br\s*[\/]?>/gi,'\n');
-            var mod_comment = "<form action='./comment_mod/{{querystring}}' method='POST'>"+
+			var board_comment_id=$(this).attr("id").slice(3);
+			var content = $("#comment"+board_comment_id).html().replace(/<br\s*[\/]?>/gi,'\n');
+			console.log(content);
+			var mod_comment = "<form action='./comment_mod/{{querystring}}comment_page={{comment_current_page}}' method='POST'>"+
                 "{% csrf_token %}"+
                 "<input type='hidden' name='board_comment_id' value=" + board_comment_id + ">"+ 
                 "<input type='hidden' name='board_post_id' value={{post.id}}>"+
@@ -32,7 +34,8 @@
                 "완료"+
                 "</button></div></div></form>";
             $(mod_comment).replaceAll("#comment_content"+board_comment_id);
-        });
+		});
+		//vote
 		$(".vote").click(function() {
 			var vote_id = $(this).attr("id").split('_'); 
             var vote_up = $("#up_"+vote_id[1]);
@@ -62,6 +65,7 @@
 				}
 			});
 		});
+		//for deleting content of post or comment
         $(".delete").click(function() {
             var yes=confirm("Do yo REALLY want to delete?");
             if(yes == true){
@@ -182,13 +186,6 @@
                 }
             });
 		});
-		$(".contnet").click(function(){
-			var content_id = $(this).attr("id").split('_');
-			var butoon = $("#comment_"+content_id[1]);
-			var text = $("#comment_"+content_id[1]).html()
-			var content = "<div id='comment"+"{{comment.id}}'>"+text+"</div>";
-			$(content).replaceAll(button);
-		});
     });
 </script>
 {% endblock %}
@@ -243,6 +240,7 @@
             <div class="panel-body">
                 {{post.content | safe}}
 				<div class="col-md-12">
+					<div class="col-md-12">{{post.signiture}}</div>
 					<div class="row">
 						<div class="col-md-6"></div>
                         {% if not post.deleted %}
@@ -307,13 +305,11 @@
             </div>
             <div class="panel-body">
                 <div id="comment_content{{ comment.id }}">
-					<div id="comment{{comment.id}}">
-						{% if comment.is_political %}
-						<a onclick="this.nextSibling.style.display=(this.nextSibling.style.display=='none')?'block':'none';" href="javascript:void(0)">이건 정치글입니다.</a><div style="display:none"><div id="comment{{comment.id}}">{{ comment.content | force_escape | linebreaksbr }}</div></div>
-						{% else %}
-						<div id="comment{{domment.id}}">{{ comment.content | force_escape | linebreaksbr}} </div>
-						{% endif %}
-					
+					{% if comment.is_political %}
+					<a onclick="this.nextSibling.style.display=(this.nextSibling.style.display=='none')?'block':'none';" href="javascript:void(0)">이건 정치글입니다.</a><div style="display:none"><div id="comment{{comment.id}}">{{ comment.content | force_escape | linebreaksbr }}</div></div>
+					{% else %}
+					<div id="comment{{comment.id}}">{{ comment.content | force_escape | linebreaksbr}} </div>
+					{% endif %}
 					<div class="col-md-12">
 						<div class="row">
 						    <div class="col-md-7"></div>
@@ -352,11 +348,31 @@
                     </div>
                 </div>
             </div>
-        </div>
-        {% endfor %}
-        {% if not post.deleted %}
+		</div>
+		{% endfor %}
+		<div style="text-align: center;">
+			<ul class="pagination pagination-sm">
+				{% if comment_page_left != 0 %}
+				<li><a href="{{querystring}}comment_page={{comment_page_left}}"">&laquo;</a></li>
+				{% endif %}
+				{% for comment_page in comment_pages%}
+				{% if comment_page == comment_current_page %}
+				<li class="active">
+				<a href="{{querystring}}comment_page={{comment_page}}">{{comment_page}}<span class="sr-only"></span></a>
+				</li>
+				{% else %}
+				<li><a href="{{querystring}}comment_page={{comment_page}}">{{comment_page}}</a></li>
+				{% endif %}
+				{% endfor %}
+				{% if comment_page_right != 0 %}
+				<li><a href="{{querystring}}comment_page={{comment_page_right}}"">&raquo;</a></li>
+				{% endif %}
+			</ul>
+		</div>
+		{% if not post.deleted %}
         <div>
-            <form action="./comment/{{querystring}}" method="POST">
+			<form action="./comment/{{querystring}}
+				comment_page={{comment_current_page}}" method="POST">
                 {%csrf_token%}
                 <input type="hidden" name="board_post_id" value="{{ post.id }}">
                 <div class="form-group">
@@ -370,7 +386,7 @@
             </form>
         </div>
         {% endif %}
-    </div>   
+	</div>   
 </div>
 
 {% include "board/list.html" %}
