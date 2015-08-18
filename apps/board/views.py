@@ -185,7 +185,7 @@ def post_read(request, board_url, post_id):
                       'board_list': board_list,
                       'current_board': current_board,
                       'report_form': report_form,
-                      'current_category': current_category
+                      'current_category': current_category,
                       # Below, there are things for comment_list
                       'comment_list': comment_list,
                       'comment_pages': comment_page_range,
